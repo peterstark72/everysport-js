@@ -1,0 +1,14 @@
+{
+  "name": "everysport",
+  "version": "1.0.0",
+  "description": "Wrapper for the Everysport API to access sport events and fixtures",
+  "keywords": ["everysport", "sport"],
+  "people": {
+    "name": "Peter Stark",
+    "url": "http://everysport.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  }
+}
