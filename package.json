@@ -1,6 +1,9 @@
 {
   "name": "everysport",
   "version": "1.0.0",
+  "main": "everysport.js",
+  "files": ["everysport.js"],
+  "license": "MIT License",
   "description": "Wrapper for the Everysport API to access sport events and fixtures",
   "keywords": ["everysport", "sport"],
   "people": {

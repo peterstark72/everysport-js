@@ -1,9 +1,25 @@
-/*
-    
-    Everysport for NodejS
-
-    by Peter Stark
-
+/**
+ * @module everysport
+ * @author Peter Stark <peterstark72@gmail.com>
+ *
+ * @license
+ * The MIT License (MIT)
+ * Copyright (c) 2015 Peter Stark
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to 
+ * deal in the Software without restriction, including without limitation the * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
 */
 
 var url             = require('url');
@@ -14,15 +30,21 @@ var EventEmitter    = require('events').EventEmitter;
 var API_HOST = "api.everysport.com",
     API_VERSION = "v1";
 
+/** 
+ * Loads JSON data
+ * @param {urlObj} urlObj - The URL object representing the JSON-formatted data
+ * @return {EventEmitter} 
+ * @emits 'loaded' when data is loaded 
+ * @emits 'error' when there is an error
+*/
 function loadJSON(urlObj) {
-
     var emitter = new EventEmitter();
 
     var body = "",
         obj,
         req;
 
-    //console.log("Requesting: ", url.format(urlObj));
+    console.log("Requesting: ", url.format(urlObj));
 
     if (urlObj.protocol === "https:") {
         req = https.get(url.format(urlObj));
@@ -55,7 +77,11 @@ function loadJSON(urlObj) {
     return emitter;
 }
 
-function slice(args) {
+/**
+ * Makes an array from the built-in arguments "array"
+ * @param args - Arguments list
+ */
+function makeArrayFromArgs(args) {
     var i,
         max,
         result = [];
@@ -66,34 +92,25 @@ function slice(args) {
 }
 
 
-function Query(apikey, entity) {
-    this.entity = entity;
-    this.urlObj = {
-        'protocol': "http",
-        'host': API_HOST,
-        'pathname': [API_VERSION, entity].join("/"),
-        'query': {
-            'apikey': apikey,
-            'fields': 'all'
-        }
-    };
-
-    function filter(name) {
-        if (arguments.length > 1) {
-            this.urlObj.query[name] = slice(arguments).slice(1).join(",");
-        }
-        return this;
-    }
-
-    this.league = filter.bind(this, "league");
-    this.team = filter.bind(this, "team");
-    this.sport = filter.bind(this, "sport");
-    this.status = filter.bind(this, "status");
-
+/**
+ * Adds a filter as a parameter to the query URL object, eg 'sport=8,10'
+ * @returns Returns itself
+ * @params First query name, the following is the query value
+ * @example 
+ * addQueryParam("status", "upcoming", "ongoing")
+ */
+function addQueryParam(name) {
+    this.urlObj.query[name] = makeArrayFromArgs(arguments).slice(1).join(",");
     return this;
 }
 
-Query.prototype.load = function () {
+
+/**
+ * Loads the list, including pagination if necessary
+ * @returns EventEmitter that emits 'data' for each items in the list, and 
+ * 'end' at the end of the list.   
+ */
+function loadList() {
 
     var self = this;
 
@@ -121,7 +138,7 @@ Query.prototype.load = function () {
 
         index = data.metadata.offset + data.metadata.count;
         if (index < data.metadata.totalCount) {
-            // Pagination
+            // Pagination, increase offset and request more data
             url.query.offset = index;
             loadJSON(url)
                 .on('loaded', ondata)
@@ -136,12 +153,45 @@ Query.prototype.load = function () {
         .on('error', onerror);
 
     return emitter;
-};
+}
 
-function StandingsQuery(apikey, leagueId) {
 
-    this.emitter = new EventEmitter();
+/**
+ * Represents a query for a list of items, such as events, sports or leagues
+ * @constructor
+ * @param {string} apikey - Everysport API key
+ * @param {string} entity - Name of list entity, eg 'events', 'leagues'
+ * @param {Array} queryParams - Array of query parameters the list supports
+ */
+function ListQuery(apikey, entity, queryParams) {
+
+    this.entity = entity;
     this.urlObj = {
+        'protocol': "http",
+        'host': API_HOST,
+        'pathname': [API_VERSION, entity].join("/"),
+        'query': {
+            'apikey': apikey,
+            'fields': 'all'
+        }
+    };
+
+    var i, max;
+    for (i = 0, max = queryParams.length; i < max; i++) {
+        this[queryParams[i]] = addQueryParam.bind(this, queryParams[i]);
+    }
+
+    this.load = loadList.bind(this);
+
+    return this;
+}
+
+
+function loadStandings(apikey, leagueId) {
+
+    var emitter = new EventEmitter();
+
+    var urlObj = {
         'protocol': "http",
         'host': API_HOST,
         'pathname': [API_VERSION, "leagues", leagueId, "standings"].join("/"),
@@ -149,26 +199,25 @@ function StandingsQuery(apikey, leagueId) {
             'apikey': apikey
         }
     };
-}
 
-StandingsQuery.prototype.load = function () {
-
-    var emitter = new EventEmitter();
-
-    loadJSON(this.urlObj)
+    loadJSON(urlObj)
         .on('loaded', function (data) {
-            emitter.emit('data', data.groups);
+            emitter.emit('loaded', data.groups);
         })
         .on('error', function (err) {
             emitter.emit('error', err);
         });
     return emitter;
-};
+}
 
 function EverysportAPI(apikey) {
-    this.events = new Query(apikey, "events");
+
+    this.events = new ListQuery(apikey, "events", ["league", "team", "sport", "status"]);
+    this.leagues = new ListQuery(apikey, "leagues", ["teamClass", "sport"]);
+    this.sports = new ListQuery(apikey, "sports", []);
+
     this.standings = function (leagueId) {
-        return new StandingsQuery(apikey, leagueId);
+        return loadStandings(apikey, leagueId);
     };
 }
 

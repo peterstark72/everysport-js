@@ -1,5 +1,5 @@
 # everysport-js
-NodeJS wrapper for the Everysport API
+NodeJS wrapper for the (Everysport API)[https://github.com/menmo/everysport-api-documentation]
 
 ````
 var everysport = require("./everysport")({YOUR API KEY});
