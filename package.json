@@ -8,9 +8,6 @@
   "directories": {
     "test": "test"
   },
-  "files": [
-    "everysport.js"
-  ],
   "license": "MIT License",
   "description": "Wrapper for the Everysport API to access sport events and fixtures",
   "keywords": [
