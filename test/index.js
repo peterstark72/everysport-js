@@ -1,9 +1,5 @@
-# everysport-js
-NodeJS wrapper for the [Everysport API](https://github.com/menmo/everysport-api-documentation).
-
-## Example Usage
-```
-var everysport = require("./everysport")(process.env.EVERYSPORT_APIKEY);
+var assert = require('assert');
+var everysport = require('../')(process.env.EVERYSPORT_APIKEY);
 
 var PINGISLIGAN_DAM = 72064,
     DIV_3_HERRAR = 72088,
@@ -15,7 +11,7 @@ everysport.events
     .status("upcoming")
     .load()
     .on("data", function (data) {
-        console.log(data.startDate, data.homeTeam.name);
+        assert(data);
     })
     .on("error", function (err) {
         console.log(err);
@@ -26,32 +22,19 @@ everysport.leagues
     .sport(SPORT_BORDTENNIS)
     .load()
     .on("data", function (data) {
-        console.log(data.name);
+        assert(data);
     });
 
 /** Prints all Everysport sports */
 everysport.sports
     .load()
     .on("data", function (data) {
-        console.log(data);
+        assert(data);
     });
 
 /** Prints Pingisligan Standings */
 everysport
     .standings(PINGISLIGAN_DAM)
     .on('loaded', function (data) {
-        console.log(data);
+        assert(data);
     });
-```
-## Command line
-Get the LeagueID from everysport.com as described [here](https://github.com/menmo/everysport-api-documentation/blob/master/basics/formats_and_terms.md#league-id).
-
-Current standings
-```
-everysport standings <leagueId>
-```
-
-Upcoming events:
-```
-everysport upcoming <leagueId>
-```

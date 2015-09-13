@@ -1,7 +1,13 @@
 {
   "name": "everysport",
   "version": "1.1.0",
-  "main": "everysport.js",
+  "main": "index.js",
+  "bin": {
+    "everysport": "./bin/index.js"
+  },
+  "directories": {
+    "test": "test"
+  },
   "files": [
     "everysport.js"
   ],
@@ -9,14 +15,16 @@
   "description": "Wrapper for the Everysport API to access sport events and fixtures",
   "keywords": [
     "everysport",
-    "sport"
+    "sport",
+    "fixtures"
   ],
-  "people": {
-    "name": "Peter Stark",
-    "url": "http://everysport.com"
-  },
+  "author": "Peter Stark <peterstark72@gmail.com> (http://peterstark.org/)",
+  "homepage": "https://github.com/peterstark72/everysport-js",
   "repository": {
     "type": "git",
     "url": "git@github.com:peterstark72/everysport-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/peterstark72/everysport-js/issues"
   }
 }
