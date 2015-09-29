@@ -1,22 +1,26 @@
 #!/usr/bin/env node
 
-var everysport = require('../')(process.env.EVERYSPORT_APIKEY);
+var everysport = require('../');
+
 var cmd = process.argv[2];
 var leagueId = Number(process.argv[3]);
-var COMMANDS = ["standings", "upcoming", "finished"];
+var COMMANDS = ["standings", "events"];
 var group, row;
+
+var api = everysport(process.env.EVERYSPORT_APIKEY);
+
+var dateFormat = new Intl.DateTimeFormat("se-sv", {"timeZone": "Europe/Copenhagen"});
 
 if (isNaN(leagueId)) {
     return console.error("Enter a valid Everysport League ID");
 }
 
 if (COMMANDS.indexOf(cmd) === -1) {
-    return console.error("Commands: \nstandings - current standings\nupcoming - upcoming events\nfinished - finished events");   
+    return console.error("Commands: \nstandings - current standings\nevents - events");   
 }
 
 if (cmd === "standings") {
-    everysport
-        .standings(leagueId)
+    api.standings(leagueId)
         .on('loaded', function (data) {
             for (group in data) {
                 for (row in data[group].standings) {
@@ -25,12 +29,11 @@ if (cmd === "standings") {
             }
         });
 } else {
-    everysport.events
+    api.events()
         .league(leagueId)
-        .status(cmd)
         .load()
         .on('data', function (data) {
-            console.log(data.startDate, data.homeTeam.name, data.visitingTeam.name);
+            console.log(dateFormat.format(new Date(data.startDate)), data.homeTeam.name, data.visitingTeam.name, data.homeTeamScore || "", data.visitingTeamScore || "");
         });
 }
 
